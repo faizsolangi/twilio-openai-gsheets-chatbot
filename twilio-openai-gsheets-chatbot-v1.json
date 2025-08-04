@@ -1,0 +1,248 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "xxxx",  #insert/replace your credential
+        "options": {}
+      },
+      "id": "xxxx",  #insert/replace your credential
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        192
+      ],
+      "webhookId": "xxxx",  #insert/replace your credential
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.body.WaId }}\n{{ $json.body.Body }}",
+              "role": "assistant"
+            },
+            {
+              "content": "You are a friendly customer service assistant for a small business. Respond concisely and professionally."
+            }
+          ]
+        },
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        128,
+        192
+      ],
+      "id": "xxxx",  #insert/replace your credential
+      "name": "Message a model",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "credentials": {
+        "openAiApi": {
+          "id": "xxxx",  #insert/replace your credential
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/xxxx/Messages.json",  #insert/replace your credential
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "twilioApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Body",
+              "value": "={{ $json.choices[0].message.content }}"
+            },
+            {
+              "name": "To",
+              "value": "={{ $('Webhook').item.json.body.From }}"
+            },
+            {
+              "name": "From",
+              "value": "={{ $('Webhook').item.json.body.To }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        192
+      ],
+      "id": "xxxx", #insert/replace your credential
+      "name": "HTTP Request",
+      "alwaysOutputData": true,
+      "executeOnce": true,
+      "retryOnFail": true,
+      "notesInFlow": true,
+      "credentials": {
+        "twilioApi": {
+          "id": "xxxx",  #insert/replace your credential
+          "name": "Twilio account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "xxxx", #insert/replace your google sheet url
+          "mode": "list",
+          "cachedResultName": "n8n-chatbot-sheets",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxx/edit?usp=drivesdk" #insert/replace your google credential
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxx/edit#gid=0" #insert/replace your google sheet url
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $json.date_created }}",
+            "From (User)": "={{ $json.to }}",
+            "To (Bot)": "={{ $json.from }}",
+            "Bot Reply": "={{ $json.body }}",
+            "User Message": "={{ $('Webhook').item.json.body.Body }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From (User)",
+              "displayName": "From (User)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "To (Bot)",
+              "displayName": "To (Bot)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "User Message",
+              "displayName": "User Message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Bot Reply",
+              "displayName": "Bot Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        688,
+        192
+      ],
+      "id": "xxxx", # insert your credentials
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xxxx",  # Insert/replace your googleSheetsOAuth2
+          "name": "Google Sheets account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "xxxx",  # insert/replace your credentials
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "xxxxx"  # insert your credentials
+  },
+  "id": "xxxx", #insert your credentials
+  "tags": []
+}
